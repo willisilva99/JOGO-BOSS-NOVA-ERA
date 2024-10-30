@@ -1,5 +1,3 @@
-import random
-
 class Boss:
     def __init__(self, hp):
         self.hp = hp
@@ -11,10 +9,5 @@ class Boss:
         return False
 
     def contra_atacar(self):
-        # Chance de contra-atacar ou roubar o prêmio
-        chance = random.random()
-        if chance < 0.2:
-            return "contra_atacar"
-        elif chance < 0.3:
-            return "roubar_premio"
-        return None
+        # Aqui você pode adicionar lógica para o contra-ataque
+        pass
