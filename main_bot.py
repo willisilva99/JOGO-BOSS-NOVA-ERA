@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands, tasks
 import os
 import random
+import asyncio  # Adicione esta linha
 from database import Database
 from boss import Boss
 from cargos import CargoManager
@@ -79,12 +80,16 @@ async def verificar_cargo(player):
     if any(player.id == player_id for player_id, _ in top_jogadores):
         cargo_id = 1300853285858578543  # Substitua pelo ID do cargo correto
         member = bot.get_guild(player.guild.id).get_member(player.id)
-        cargo = member.guild.get_role(cargo_id)
-        if cargo:
-            await member.add_roles(cargo)
-            await player.send(f"Você ganhou o cargo: {cargo.name}!")
+        
+        if member is not None:
+            cargo = member.guild.get_role(cargo_id)
+            if cargo:
+                await member.add_roles(cargo)
+                await player.send(f"Você ganhou o cargo: {cargo.name}!")
+            else:
+                await player.send("Cargo não encontrado.")
         else:
-            await player.send("Cargo não encontrado.")
+            await player.send("Membro não encontrado no guilda.")
     else:
         await player.send("Você não está entre os três maiores danos.")
 
