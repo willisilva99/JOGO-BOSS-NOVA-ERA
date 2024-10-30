@@ -7,7 +7,6 @@ class Database:
         self.cur = self.conn.cursor()
 
     def setup(self):
-        # Criação da tabela de jogadores e danos se não existir
         self.cur.execute("""
         CREATE TABLE IF NOT EXISTS jogadores (
             id SERIAL PRIMARY KEY,
@@ -18,7 +17,6 @@ class Database:
         self.conn.commit()
 
     def add_dano(self, player_id, dano):
-        # Adiciona dano ao jogador, criando um registro caso ainda não exista
         self.cur.execute("""
         INSERT INTO jogadores (player_id, dano_total)
         VALUES (%s, %s)
@@ -28,7 +26,6 @@ class Database:
         self.conn.commit()
 
     def get_top_danos(self, limit=3):
-        # Pega os top jogadores em dano
         self.cur.execute("""
         SELECT player_id, dano_total FROM jogadores
         ORDER BY dano_total DESC
@@ -39,3 +36,4 @@ class Database:
     def close(self):
         self.cur.close()
         self.conn.close()
+
