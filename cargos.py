@@ -15,6 +15,7 @@ class CargoManager:
         }
 
     async def atribuir_cargos(self, top_jogadores):
+        print(f"Top jogadores: {top_jogadores}")  # Log dos top jogadores
         cargos_atuais = {member.id: member.roles for member in self.guild.members}
 
         # Atribuir cargos com base nos três maiores danos
@@ -30,7 +31,7 @@ class CargoManager:
                     if cargo not in cargos_atuais.get(player_id, []):
                         await member.add_roles(cargo)
                         await member.send(f"Você recebeu o prêmio: {premio}!")
-                        print(f"Atribuído {cargo.name} a {member.name}.")
+                        print(f"Atribuído {cargo.name} a {member.name} com dano {dano}.")
         
         # Remover cargos dos jogadores que não estão mais nos 3 primeiros
         for member in self.guild.members:
