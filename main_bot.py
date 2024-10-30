@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 import os
 import random
-import asyncio  # Adicione esta linha
+import asyncio
 from database import Database
 from boss import Boss
 from cargos import CargoManager
@@ -77,19 +77,25 @@ async def atacar(ctx):
 
 async def verificar_cargo(player):
     top_jogadores = database.get_top_danos()
+    guild = bot.guilds[0]  # Usa a primeira guilda onde o bot está conectado
+    member = guild.get_member(player.id)
+
+    if member is None:
+        await player.send("Não foi possível encontrar você na guilda. Verifique se você está na guilda correta.")
+        return
+
     if any(player.id == player_id for player_id, _ in top_jogadores):
         cargo_id = 1300853285858578543  # Substitua pelo ID do cargo correto
-        member = bot.get_guild(player.guild.id).get_member(player.id)
-        
-        if member is not None:
-            cargo = member.guild.get_role(cargo_id)
-            if cargo:
-                await member.add_roles(cargo)
-                await player.send(f"Você ganhou o cargo: {cargo.name}!")
-            else:
-                await player.send("Cargo não encontrado.")
+        cargo = guild.get_role(cargo_id)
+
+        if cargo:
+            await member.add_roles(cargo)
+            try:
+                await member.send(f"Você ganhou o cargo: {cargo.name}!")
+            except discord.Forbidden:
+                print(f"Não foi possível enviar mensagem privada para {member.name}.")
         else:
-            await player.send("Membro não encontrado no guilda.")
+            await player.send("Cargo não encontrado.")
     else:
         await player.send("Você não está entre os três maiores danos.")
 
