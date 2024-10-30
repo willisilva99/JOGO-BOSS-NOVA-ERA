@@ -22,11 +22,20 @@ cargo_manager = None
 
 @bot.event
 async def on_ready():
+    global cargo_manager
+
+    # Conectar ao banco de dados
+    database.connect()
+    
+    # Verificar se a conexão foi bem-sucedida
+    if database.conn is None:
+        print("Falha ao conectar ao banco de dados. O bot não pode continuar.")
+        return
+
     print(f"Logged in as {bot.user}")
     guild = bot.guilds[0]  # Pega a primeira guilda
-    global cargo_manager
     cargo_manager = CargoManager(guild)
-    database.setup()
+    database.setup()  # Configurar a tabela
     atualizar_cargos.start()
 
 @bot.command()
