@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 import os
+import random
 from database import Database
 from boss import Boss
 from cargos import CargoManager
@@ -29,29 +30,27 @@ async def on_ready():
     atualizar_cargos.start()
 
 @bot.command()
-async def atacar(ctx, dano: int):
+async def atacar(ctx):
     player_id = ctx.author.id
-    # Verifica se o dano é um número válido
-    if dano <= 0:
-        await ctx.send("O dano deve ser um número positivo.")
-        return
 
-    if boss.receber_dano(dano):
-        await ctx.send("O boss foi derrotado!")
-        # Reseta o HP ou redefine o boss para uma nova fase
+    # Gera um dano aleatório entre 10 e 50
+    dano = random.randint(10, 50)
+    
+    # Chance de bloqueio do boss (30% de chance)
+    if random.random() < 0.3:  # 30% de chance
+        dano = 0  # O boss bloqueou o ataque
 
+    if dano > 0:
+        if boss.receber_dano(dano):
+            await ctx.send("O boss foi derrotado!")
+            # Aqui você pode adicionar lógica para redefinir o boss
+        else:
+            await ctx.send(f"{ctx.author.mention}, você causou {dano} de dano ao boss.")
     else:
-        contra_ataque = boss.contra_atacar()
-        if contra_ataque == "contra_atacar":
-            await ctx.send(f"{ctx.author.mention}, o boss contra-atacou!")
-        elif contra_ataque == "roubar_premio":
-            await ctx.send(f"{ctx.author.mention}, o boss roubou seu prêmio!")
+        await ctx.send(f"{ctx.author.mention}, o boss bloqueou seu ataque!")
 
     # Adiciona o dano ao banco de dados
     database.add_dano(player_id, dano)
-    
-    # Mensagem de confirmação de dano
-    await ctx.send(f"{ctx.author.mention}, você causou {dano} de dano ao boss.")
 
 @tasks.loop(minutes=5)
 async def atualizar_cargos():
@@ -62,9 +61,10 @@ async def atualizar_cargos():
 
         # Mensagem de atualização
         jogadores_mensagem = ', '.join([f"<@{player_id}> (Dano: {dano})" for player_id, dano in top_jogadores])
-        channel_id = <1299092242673303552>  # Substitua pelo ID do canal
+        channel_id = <ID_DO_CANAL>  # Substitua pelo ID do canal
         channel = bot.get_channel(channel_id)
         if channel:
             await channel.send(f"Atualização de danos: {jogadores_mensagem}")
 
-bot.run(os.getenv("TOKEN"))
+bot.run(os.getenv("DISCORD_TOKEN"))
+
