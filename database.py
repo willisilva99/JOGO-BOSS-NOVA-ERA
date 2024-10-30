@@ -14,6 +14,7 @@ class Database:
             print("Conexão com o banco de dados estabelecida.")
         except psycopg2.Error as e:
             print(f"Erro ao conectar ao banco de dados: {e}")
+            self.conn = None  # Assegura que conn seja None se a conexão falhar
 
     def setup(self):
         """Configura a tabela jogadores no banco de dados."""
