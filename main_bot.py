@@ -1,24 +1,41 @@
-@bot.command()
-async def atacar(ctx, dano: int):
-    player_id = ctx.author.id
-    # Verifica se o dano é um número válido
-    if dano <= 0:
-        await ctx.send("O dano deve ser um número positivo.")
-        return
+import random
+import discord
 
-    if boss.receber_dano(dano):
-        await ctx.send("O boss foi derrotado!")
-        # Reseta o HP ou redefine o boss para uma nova fase
+class CargoManager:
+    def __init__(self, guild):
+        self.guild = guild
+        self.cargos = {
+            1: 1300853285858578543,
+            2: 1300850877585690655,
+            3: 1300854639658270761
+        }
+        self.premios = {
+            1: "SNIPER EMBERIUM",
+            2: "SNIPER BOSS",
+            3: "SNIPER ADAMANTY"
+        }
 
-    else:
-        contra_ataque = boss.contra_atacar()
-        if contra_ataque == "contra_atacar":
-            await ctx.send(f"{ctx.author.mention}, o boss contra-atacou!")
-        elif contra_ataque == "roubar_premio":
-            await ctx.send(f"{ctx.author.mention}, o boss roubou seu prêmio!")
+    async def atribuir_cargos(self, top_jogadores):
+        cargos_atuais = {}
+        
+        # Atribuir cargos com base nos três maiores danos
+        for rank, (player_id, dano) in enumerate(top_jogadores, start=1):
+            cargo_id = self.cargos.get(rank)
+            premio = self.premios.get(rank)
+            if cargo_id:
+                cargos_atuais[player_id] = cargo_id  # Armazena os cargos a serem atribuídos
+                member = self.guild.get_member(player_id)
+                cargo = self.guild.get_role(cargo_id)
+                if member and cargo:
+                    await member.add_roles(cargo)
+                    await member.send(f"Você recebeu o prêmio: {premio}!")
 
-    # Adiciona o dano ao banco de dados
-    database.add_dano(player_id, dano)
-    
-    # Mensagem de confirmação de dano
-    await ctx.send(f"{ctx.author.mention}, você causou {dano} de dano ao boss.")
+        # Remover cargos dos jogadores que não estão mais nos 3 primeiros
+        for member in self.guild.members:
+            if member.id not in cargos_atuais:
+                for rank in self.cargos.keys():
+                    cargo_id = self.cargos[rank]
+                    cargo = self.guild.get_role(cargo_id)
+                    if cargo in member.roles:
+                        await member.remove_roles(cargo)
+                        await member.send(f"Você perdeu o cargo: {cargo.name}.")
