@@ -1,3 +1,4 @@
+import random
 import discord
 
 class CargoManager:
@@ -15,17 +16,26 @@ class CargoManager:
         }
 
     async def atribuir_cargos(self, top_jogadores):
+        cargos_atuais = {}
+        
         # Atribuir cargos com base nos três maiores danos
         for rank, (player_id, dano) in enumerate(top_jogadores, start=1):
             cargo_id = self.cargos.get(rank)
             premio = self.premios.get(rank)
             if cargo_id:
+                cargos_atuais[player_id] = cargo_id  # Armazena os cargos a serem atribuídos
                 member = self.guild.get_member(player_id)
                 cargo = self.guild.get_role(cargo_id)
                 if member and cargo:
                     await member.add_roles(cargo)
-                    # Mensagem de premiação com chance de quebra
-                    if random.random() > 0.3:  # 30% de chance de quebrar
-                        await member.send(f"Você recebeu o prêmio: {premio}!")
-                    else:
-                        await member.send(f"O prêmio {premio} quebrou!")
+                    await member.send(f"Você recebeu o prêmio: {premio}!")
+
+        # Remover cargos dos jogadores que não estão mais nos 3 primeiros
+        for member in self.guild.members:
+            if member.id not in cargos_atuais:
+                for rank in self.cargos.keys():
+                    cargo_id = self.cargos[rank]
+                    cargo = self.guild.get_role(cargo_id)
+                    if cargo in member.roles:
+                        await member.remove_roles(cargo)
+                        await member.send(f"Você perdeu o cargo: {cargo.name}.")
