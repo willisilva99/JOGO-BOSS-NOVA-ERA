@@ -12,6 +12,7 @@ load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.reactions = True  # Permite que o bot gerencie reações
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Variáveis e configuração do boss e do banco de dados
@@ -54,12 +55,38 @@ async def atacar(ctx):
             await ctx.send("O boss foi derrotado!")
             # Aqui você pode adicionar lógica para redefinir o boss
         else:
-            await ctx.send(f"{ctx.author.mention}, você causou {dano} de dano ao boss.")
+            message = await ctx.send(f"{ctx.author.mention}, você causou {dano} de dano ao boss. Reaja para verificar a chance de ganhar um cargo!")
+            await message.add_reaction("👍")  # Adiciona uma reação à mensagem
+
+            def check(reaction, user):
+                return user == ctx.author and reaction.message.id == message.id and str(reaction.emoji) == "👍"
+
+            try:
+                await bot.wait_for("reaction_add", timeout=30.0, check=check)  # Aguarda a reação por 30 segundos
+                await ctx.send(f"{ctx.author.mention}, você reagiu e agora verificamos se você ganha um cargo...")
+                await verificar_cargo(ctx.author)
+            except asyncio.TimeoutError:
+                await ctx.send(f"{ctx.author.mention}, você não reagiu a tempo!")
+
     else:
         await ctx.send(f"{ctx.author.mention}, o boss bloqueou seu ataque!")
 
     # Adiciona o dano ao banco de dados
     database.add_dano(player_id, dano)
+
+async def verificar_cargo(player):
+    top_jogadores = database.get_top_danos()
+    if any(player.id == player_id for player_id, _ in top_jogadores):
+        cargo_id = 1300853285858578543  # Substitua pelo ID do cargo correto
+        member = bot.get_guild(player.guild.id).get_member(player.id)
+        cargo = member.guild.get_role(cargo_id)
+        if cargo:
+            await member.add_roles(cargo)
+            await player.send(f"Você ganhou o cargo: {cargo.name}!")
+        else:
+            await player.send("Cargo não encontrado.")
+    else:
+        await player.send("Você não está entre os três maiores danos.")
 
 @tasks.loop(minutes=5)
 async def atualizar_cargos():
