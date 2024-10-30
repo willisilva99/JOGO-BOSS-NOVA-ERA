@@ -30,16 +30,29 @@ class CargoManager:
                     # Atribui o cargo se o jogador não o tiver
                     if cargo not in cargos_atuais.get(player_id, []):
                         await member.add_roles(cargo)
-                        await member.send(f"Você recebeu o prêmio: {premio}!")
+                        try:
+                            await member.send(f"Você recebeu o prêmio: {premio}!")
+                        except discord.Forbidden:
+                            print(f"Não foi possível enviar mensagem para {member.name}.")
                         print(f"Atribuído {cargo.name} a {member.name} com dano {dano}.")
         
         # Remover cargos dos jogadores que não estão mais nos 3 primeiros
+        await self.remover_cargos(top_jogadores)
+
+    async def remover_cargos(self, top_jogadores):
+        # Identificar IDs dos jogadores no top 3
+        top_jogadores_ids = [player_id for player_id, _ in top_jogadores]
+
+        # Verificar cada membro da guilda
         for member in self.guild.members:
-            if member.id not in [player_id for player_id, _ in top_jogadores]:
-                for rank in self.cargos.keys():
-                    cargo_id = self.cargos[rank]
-                    cargo = self.guild.get_role(cargo_id)
-                    if cargo in member.roles:
-                        await member.remove_roles(cargo)
+            for rank in self.cargos.keys():
+                cargo_id = self.cargos[rank]
+                cargo = self.guild.get_role(cargo_id)
+
+                if cargo in member.roles and member.id not in top_jogadores_ids:
+                    await member.remove_roles(cargo)
+                    try:
                         await member.send(f"Você perdeu o cargo: {cargo.name}.")
-                        print(f"Removido {cargo.name} de {member.name}.")
+                    except discord.Forbidden:
+                        print(f"Não foi possível enviar mensagem para {member.name}.")
+                    print(f"Removido {cargo.name} de {member.name}.")
