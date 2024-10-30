@@ -61,10 +61,10 @@ async def atualizar_cargos():
 
         # Mensagem de atualização
         jogadores_mensagem = ', '.join([f"<@{player_id}> (Dano: {dano})" for player_id, dano in top_jogadores])
-        channel_id = <ID_DO_CANAL>  # Substitua pelo ID do canal
+        channel_id = <1299092242673303552>  # Substitua pelo ID do canal
         channel = bot.get_channel(channel_id)
         if channel:
             await channel.send(f"Atualização de danos: {jogadores_mensagem}")
 
-bot.run(os.getenv("DISCORD_TOKEN"))
+bot.run(os.getenv("TOKEN"))
 
