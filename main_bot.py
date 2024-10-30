@@ -8,9 +8,10 @@ from boss import Boss
 from cargos import CargoManager
 from dotenv import load_dotenv
 
-# Carrega as variáveis de ambiente
+# Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
+# Configuração de Intents do bot
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
@@ -18,6 +19,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Configuração de variáveis
 DATABASE_URL = os.getenv("DATABASE_URL")
+TOKEN = os.getenv("TOKEN")  # Certifique-se de que a variável TOKEN está configurada no arquivo .env
 database = Database(DATABASE_URL)
 boss = Boss(1000)
 cargo_manager = None
@@ -27,11 +29,18 @@ async def on_ready():
     global cargo_manager
     database.connect()
 
+    # Verificar conexão com o banco de dados
     if database.conn is None:
         print("Falha ao conectar ao banco de dados. O bot não pode continuar.")
         return
 
     print(f"Logged in as {bot.user}")
+
+    # Verificar se o bot está em alguma guilda
+    if not bot.guilds:
+        print("O bot não está em nenhuma guilda. Adicione o bot a um servidor.")
+        return
+
     guild = bot.guilds[0]
     cargo_manager = CargoManager(guild)
     database.setup()
@@ -93,3 +102,23 @@ async def verificar_top(player):
                         print(f"Não foi possível enviar mensagem para {member.name}.")
                     
                 print(f"Atribuído {cargo.name} a {member.name} com dano acumulado.")
+
+@tasks.loop(minutes=5)
+async def atualizar_cargos():
+    top_jogadores = database.get_top_danos()
+    
+    if top_jogadores:
+        await cargo_manager.atribuir_cargos(top_jogadores)
+
+        # Mensagem de atualização
+        jogadores_mensagem = ', '.join([f"<@{player_id}> (Dano: {dano})" for player_id, dano in top_jogadores])
+        channel_id = 1299092242673303552  # ID do canal
+        channel = bot.get_channel(channel_id)
+        if channel:
+            await channel.send(f"Atualização de danos: {jogadores_mensagem}")
+
+# Executa o bot
+if TOKEN is None:
+    print("TOKEN não encontrado. Certifique-se de que a variável TOKEN está definida no arquivo .env.")
+else:
+    bot.run(TOKEN)
